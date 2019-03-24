@@ -320,7 +320,7 @@ func (c *Client) headRequest(resp *Response) stateFunc {
 
 	if resp.Filename != "" && resp.fi == nil {
 		// destination path is already known and does not exist
-		log.Printf("Destination path '%s' is already known and does not exist")
+		log.Printf("Destination path '%s' is already known and does not exist", resp.Filename)
 		return c.getRequest
 	}
 
