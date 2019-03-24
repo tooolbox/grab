@@ -19,7 +19,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "usage: %s url...\n", os.Args[0])
 		os.Exit(1)
 	}
-	urls := os.Args[1:]
+	urls := args[1:]
 
 	// download files
 	respch, err := grabui.GetBatch(context.Background(), 0, *dest, urls...)
