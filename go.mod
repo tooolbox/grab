@@ -1,1 +1,1 @@
-package github.com/tooolbox/grab
+module github.com/tooolbox/grab
