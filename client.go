@@ -190,7 +190,7 @@ func (c *Client) run(resp *Response, f stateFunc) {
 //
 // If an error occurs, the next stateFunc is closeResponse.
 func (c *Client) statFileInfo(resp *Response) stateFunc {
-	log.Printf("Doing statFileInfo...")
+	log.Printf("Doing statFileInfo for filename '%s'", resp.Filename)
 
 	if resp.Filename == "" {
 		log.Printf("No filename, doing headRequest...")
@@ -206,6 +206,7 @@ func (c *Client) statFileInfo(resp *Response) stateFunc {
 		return c.closeResponse
 	}
 	if fi.IsDir() {
+		log.Printf("File '%s' is directory...", resp.Filename)
 		resp.Filename = ""
 		return c.headRequest
 	}
@@ -310,11 +311,13 @@ func (c *Client) doHTTPRequest(req *http.Request) (*http.Response, error) {
 
 func (c *Client) headRequest(resp *Response) stateFunc {
 	if resp.optionsKnown {
+		log.Printf("headRequest has options already known")
 		return c.getRequest
 	}
 	resp.optionsKnown = true
 
 	if resp.Request.NoResume {
+		log.Printf("headRequest shows Request.NoResume, going to getRequest...")
 		return c.getRequest
 	}
 
@@ -335,6 +338,7 @@ func (c *Client) headRequest(resp *Response) stateFunc {
 	resp.HTTPResponse.Body.Close()
 
 	if resp.HTTPResponse.StatusCode != http.StatusOK {
+		log.Printf("headRequest shows status code '%d', going to getRequest...", resp.HTTPResponse.StatusCode)
 		return c.getRequest
 	}
 
