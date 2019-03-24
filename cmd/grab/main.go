@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 
@@ -9,15 +10,19 @@ import (
 )
 
 func main() {
+
 	// validate command args
-	if len(os.Args) < 2 {
+	dest := flag.String("dest", ".", "destination to download files")
+	flag.Parse()
+	args := flag.Args()
+	if len(args) < 1 {
 		fmt.Fprintf(os.Stderr, "usage: %s url...\n", os.Args[0])
 		os.Exit(1)
 	}
 	urls := os.Args[1:]
 
 	// download files
-	respch, err := grabui.GetBatch(context.Background(), 0, ".", urls...)
+	respch, err := grabui.GetBatch(context.Background(), 0, *dest, urls...)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
