@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/tooolbox/grab"
 )
 
 type ConsoleClient struct {
