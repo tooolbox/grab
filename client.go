@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -189,12 +190,16 @@ func (c *Client) run(resp *Response, f stateFunc) {
 //
 // If an error occurs, the next stateFunc is closeResponse.
 func (c *Client) statFileInfo(resp *Response) stateFunc {
+	log.Printf("Doing statFileInfo...")
+
 	if resp.Filename == "" {
+		log.Printf("No filename, doing headRequest...")
 		return c.headRequest
 	}
 	fi, err := os.Stat(resp.Filename)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Printf("File '%s' doesn't exist, doing headRequest...", resp.Filename)
 			return c.headRequest
 		}
 		resp.err = err
@@ -205,6 +210,8 @@ func (c *Client) statFileInfo(resp *Response) stateFunc {
 		return c.headRequest
 	}
 	resp.fi = fi
+	log.Printf("Found file '%s', doing validateLocal...", resp.Filename)
+
 	return c.validateLocal
 }
 
@@ -227,14 +234,18 @@ func (c *Client) validateLocal(resp *Response) stateFunc {
 
 	// determine expected file size
 	size := resp.Request.Size
+	log.Printf("Expected file size is '%d'", size)
 	if size == 0 && resp.HTTPResponse != nil {
+		log.Printf("Have an HTTPResponse, setting size to '%d'", size)
 		size = resp.HTTPResponse.ContentLength
 	}
 	if size == 0 {
+		log.Printf("Size is '%d', doing headRequest...", size)
 		return c.headRequest
 	}
 
 	if size == resp.fi.Size() {
+		log.Printf("Size is equal to existing file size, going to do checksumFile")
 		resp.DidResume = true
 		resp.bytesResumed = resp.fi.Size()
 		return c.checksumFile
@@ -309,6 +320,7 @@ func (c *Client) headRequest(resp *Response) stateFunc {
 
 	if resp.Filename != "" && resp.fi == nil {
 		// destination path is already known and does not exist
+		log.Printf("Destination path '%s' is already known and does not exist")
 		return c.getRequest
 	}
 
@@ -326,6 +338,7 @@ func (c *Client) headRequest(resp *Response) stateFunc {
 		return c.getRequest
 	}
 
+	log.Printf("Head request done, reading response...")
 	return c.readResponse
 }
 
@@ -362,6 +375,8 @@ func (c *Client) readResponse(resp *Response) stateFunc {
 
 	// check filename
 	if resp.Filename == "" {
+		log.Printf("Response filename is empty, guessing filename...")
+
 		filename, err := guessFilename(resp.HTTPResponse)
 		if err != nil {
 			resp.err = err
@@ -374,9 +389,13 @@ func (c *Client) readResponse(resp *Response) stateFunc {
 	if resp.requestMethod() == "HEAD" {
 		if resp.HTTPResponse.Header.Get("Accept-Ranges") == "bytes" {
 			resp.CanResume = true
+			log.Printf("CanResume is true")
 		}
+		log.Printf("Response read, going to statFileInfo...")
 		return c.statFileInfo
 	}
+
+	log.Printf("Response read, going to openWriter...")
 	return c.openWriter
 }
 
